@@ -6,7 +6,7 @@ min_pt <- min(dfl1$pseudotime)
 max_pt <- max(dfl1$pseudotime)
 
 # Create a sequence of pseudotime values at intervals of 0.5 units
-pseudotime_seq <- seq(min_pt, max_pt, by = 1)
+pseudotime_seq <- seq(min_pt, max_pt, by = 0.5)
 
 # Initialize empty dataframe to store density values for control and PE samples
 density_df <- data.frame(Pseudotime = pseudotime_seq,
