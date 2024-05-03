@@ -1,5 +1,4 @@
-
-# Subset data fram by lineage
+# Subset data frame by lineage
 dfl1<-df_sample[df_sample$lineages == "Lineage2",]
 # Define the range of pseudotime values
 min_pt <- min(dfl1$pseudotime)
