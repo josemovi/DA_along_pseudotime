@@ -31,11 +31,11 @@ for (i in seq_along(pseudotime_seq)) {
     # Contingency table for Wilcoxon rank-sum test
     contingency_table <- table(subset_data$conditions, subset_data$Sample_id)
     
-    # Extract counts for Control and PE conditions
+    # Extract counts for Control and PE conditions per sample (vector with counts per sample)
     control_v <- as.vector(contingency_table["Control", ])
     pe_v <- as.vector(contingency_table["PE", ])
     
-    # Remove zeros from the vectors
+    # Remove zeros from the vectors (Control samples has zero cell counts PE, and PE zero control cell. Remove that)
     control_v <- control_v[control_v != 0]
     pe_v <- pe_v[pe_v != 0]
     
