@@ -1,0 +1,149 @@
+---
+title: "FMI paper figures"
+author: "Jose J Moreno-Villena"
+date: "2024-06-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+#install.packages("remotes")
+#remotes::install_github("davidsjoberg/ggsankey")
+library(ggsankey)
+
+```
+
+
+```{r}
+
+all_fmi<-readRDS(file = "/Users/jose/Documents/ucl_postdoc/FMI_supplementary_information/FMI-all-20patients-20240110.rds")
+```
+
+
+```{r fig.width = 8, fig.height =10}
+
+
+cell_annot<-all_fmi@meta.data[,grep("CellT",names(all_fmi@meta.data))[1:3]]
+cell_annot[,1]<-gsub("$","_1",cell_annot[,1])
+cell_annot[,2]<-gsub("$","_2",cell_annot[,2])
+cell_annot[,3]<-gsub("$","_3",cell_annot[,3])
+
+
+# Assuming make_long creates a column called 'x' to indicate the position
+df2 <- cell_annot %>%
+  make_long(CellTypeManual.l1, CellTypeManual.l2, CellTypeManual.l3)
+
+# Define the order for CellTypeManual.l1, CellTypeManual.l2, and CellTypeManual.l3
+l1_order <- c("B", "Lymphoid", "Myeloid", "Trophoblast", "Stromal")
+l2_order <- c("B", "plasma/plasmablast", "ILC", "NK", "NKT", "CD4", "CD8", "MAIT", "gdT", "Neutrophils", "Mast",
+              "Dendritic", "pDC", "Monocyte", "Macrophage", "Hofbauer", "Platelet", "STB", "CTB", "EVT",
+              "SC-CTB", "SC-EVT", "Endothelial", "LED", "Decidual", "Epithelium", "Muscle", "Fibroblast")
+l3_order <- c("Immature_Naive_B", "Naive_B", "Memory_B", "ABC", "plasmablast", "plasma", "ILC", "NK", "CD56_NK", "CD16_NK",
+              "Fetal_NKT", "NKT", "NKT-proliferating", "Fetal_CD4_T_Naive_CM", "CD4_T_Naive_CM", "CD4_Th", "FoxP3-Treg",
+              "CD4_TEM", "CD4_T_CTL", "Fetal_CD8_T_Naive_CM", "CD8_T_Naive_CM", "GZMK_CD8_T", "CD8_TEM", "CD8_T_Exhausted",
+              "MAIT", "gdT", "Neutrophils", "Mast", "cDC3", "cDC2", "cDC1-proliferating", "cDC1", "pDC", "Fetal-Monocyte",
+              "CD14_Monocyte", "CD16_Monocyte", "Nonclassical-monocyte", "Fetal-Nonclassical-monocyte",
+              "Intermediate-macrophage", "Macrophage", "Macrophage-proliferating", "Hofbauer", "Platelet", "STB",
+              "CTB-proliferating", "CTB", "EVT", "SC-CTB", "SC-EVT", "GC", "eEVT", "LED", "Endothelial", "Decidual_stromal",
+              "Uterine_Epithelial", "SC-Epithelial", "Smooth_muscle", "Fetal_fibroblast")
+
+# Append suffixes to differentiate levels
+l1_order <- paste0(l1_order, "_1")
+l2_order <- paste0(l2_order, "_2")
+l3_order <- paste0(l3_order, "_3")
+
+# Combine all levels for factors
+all_levels <- unique(c(l1_order, l2_order, l3_order))
+
+# Create the fill_node column to maintain the CellTypeManual.l1 values
+df3a <- df2 %>%
+  mutate(fill_node = ifelse(x == "CellTypeManual.l1", node, NA)) %>%
+  fill(fill_node, .direction = "downup") %>%
+  mutate(node = factor(node, levels = all_levels),
+         next_node = factor(next_node, levels = all_levels),
+         fill_node = factor(fill_node, levels = l1_order)) %>%
+  arrange(x, node)
+
+
+# Define a custom color palette with alpha for transparency
+my_colors <- c("#1b9e77", "#d95f02", "#7570b3", "#e7298a", "#66a61e")
+my_colors_transparent <- alpha(my_colors, 0.7)  # Adjust alpha (transparency) here
+# Define a pastel color palette
+pastel_colors <- c("#FFB6C1", "#FFD700", "#87CEFA", "#98FB98", "#FFA07A")  # Adjust as needed
+
+
+
+# Plotting with custom colors and transparency
+sankey_2<-ggplot(df3a, aes(x = x, 
+                 next_x = next_x, 
+                 node = node, 
+                 next_node = next_node,
+                 fill = fill_node,  # Use fill_node for coloring
+                 label = node)) +
+  geom_sankey() +
+  geom_sankey_label(aes(fill = fill_node), color = "black", size = 3) +  # Use fill_node for label coloring
+  scale_fill_manual(values = pastel_colors) +  # Apply custom colors with transparency
+  theme_sankey(base_size = 16) + 
+  guides(fill = "none") +
+  scale_x_discrete(labels = c("CellTypeManual.l1" = "Level 1",
+                              "CellTypeManual.l2" = "Level 2",
+                              "CellTypeManual.l3" = "Level 3"))
+
+
+
+```
+
+
+
+```{r fig.width = 8, fig.height =7}
+df <- all_fmi@meta.data %>%
+  make_long(CellTypeManual.l1, CellTypeManual.l2)
+
+l1_order_a <- c( "B", "Lymphoid", "Myeloid", "Trophoblast", "Stromal")
+
+#l1_order <- c("Stromal", "Trophoblast", "Myeloid","Lymphoid", "B")
+# Define the order for CellTypeManual.l3
+l2_order_a<-c("B","plasma/plasmablast","ILC","NK","NKT","CD4","CD8","MAIT","gdT","Neutrophils","Mast","Dendritic","pDC","Monocyte","Macrophage","Hofbauer","Platelet","STB","CTB","EVT","SC-CTB","SC-EVT","Endothelial","LED","Decidual","Epithelium","Muscle","Fibroblast")
+# Create the fill_node column to maintain the CellTypeManual.l1 values
+dfa <- df %>%
+  group_by(node) %>%
+  mutate(fill_node = first(node[x == "CellTypeManual.l1"])) %>%
+  ungroup() %>%
+  mutate(fill_node = ifelse(is.na(fill_node), lag(fill_node), fill_node)) %>%
+  mutate(fill_node = ifelse(is.na(fill_node), lead(fill_node), fill_node)) %>%
+  mutate(node = factor(node, levels = unique(c(l1_order_a, l2_order_a))),
+         next_node = factor(next_node, levels = unique(c(l1_order_a, l2_order_a))),
+         fill_node = factor(fill_node, levels = unique(l1_order_a))) %>%
+  arrange(x, node)
+
+# Plotting
+sankey_1<-ggplot(dfa, aes(x = x, 
+                      next_x = next_x, 
+                      node = node, 
+                      next_node = next_node,
+                      fill = fill_node,  # Use fill_node for coloring
+                      label = node)) +
+  geom_sankey() +
+  geom_sankey_label(aes(fill = fill_node), color = "black", size = 3) +  # Use fill_node for label coloring
+    scale_fill_manual(values = pastel_colors) +  # Apply custom colors with transparency
+  theme_sankey(base_size = 16) + 
+  guides(fill = "none") +
+  scale_x_discrete(labels = c("CellTypeManual.l1" = "Level 1",
+                              "CellTypeManual.l2" = "Level 2"))
+
+
+pdf("/Users/jose/Documents/ucl_postdoc/FMI_supplementary_information/sankey_plot_1.pdf", width = 10, height = 9)
+sankey_1
+dev.off()
+
+pdf("/Users/jose/Documents/ucl_postdoc/FMI_supplementary_information/sankey_plot_2.pdf", width = 10, height = 16)
+sankey_2
+dev.off()
+
+
+```
+

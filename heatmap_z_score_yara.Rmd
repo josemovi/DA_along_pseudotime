@@ -1,0 +1,48 @@
+
+From seurat object (tropho) subset CTB trophoblasts and plot genes of interest
+```{r}
+tropho_CTB <- subset(tropho, CellTypeManual.l3 %in% c("CTB"))
+
+
+
+genes <- c("IGF2","MPP7","KRT8","KRT18","KRT19")
+           
+
+# Extract the expression data for the genes of interest
+expr_data <- FetchData(tropho_CTB, vars = genes)
+expr_data$condition <- tropho_CTB@meta.data$GA_Condition 
+
+library(dplyr)
+
+result <- expr_data %>%
+  group_by(condition) %>%
+  summarise(across(c(IGF2,MPP7,KRT8,KRT18,KRT19), mean))
+
+```
+
+Heatmap with z-scores
+```{r fig.width = 2.5, fig.height =1.1}
+
+#library(pheatmap)
+#library(tidyr)
+
+# Convert the tibble to a matrix, excluding the 'condition' column
+data_matrix <- result %>%
+  column_to_rownames("condition") %>%
+  as.matrix()
+
+# Calculate z-scores
+z_scores <- scale(data_matrix)
+
+# Create the heatmap
+pheatmap(z_scores,
+         color = colorRampPalette(c("navy", "white", "firebrick3"))(50),
+         cluster_rows = FALSE,  # Set to TRUE if you want to cluster rows
+         cluster_cols = FALSE,
+         legend = TRUE,  # This line removes the color scale
+         angle_col = 45,treeheight_col = 1,cellwidth = 15,cellheight = 12,
+         fontsize_col = 8,
+         gaps_col = c(1,1,1,1,2,2,2,2))  # This sets the width of the gaps 
+
+
+```
